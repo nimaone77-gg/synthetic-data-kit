@@ -109,7 +109,7 @@ def process_file(
         # Now save the actual result
         try:
             with open(output_path, 'w', encoding='utf-8') as f:
-                json.dump(result, f, indent=2)
+                json.dump(result, f, ensure_ascii=False, indent=2)
             print(f"Successfully wrote result to {output_path}")
         except Exception as e:
             print(f"Error writing result file: {e}")
@@ -148,7 +148,7 @@ def process_file(
         # Save output
         output_path = os.path.join(output_dir, f"{base_name}_summary.json")
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump({"summary": summary}, f, indent=2)
+            json.dump({"summary": summary}, f, ensure_ascii=False, indent=2)
         
         return output_path
     
@@ -180,7 +180,7 @@ def process_file(
         # Save output
         output_path = os.path.join(output_dir, f"{base_name}_cot_examples.json")
         with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(result, f, indent=2)
+            json.dump(result, f, ensure_ascii=False, indent=2)
         
         if verbose:
             # Print some example content
