@@ -20,7 +20,7 @@ paths:
 vllm:
   api_base: "http://localhost:8000/v1"
   port: 8000
-  model: "unsloth/Llama-3.2-3B-Instruct"  # مدل مناسب‌تر مجددا بررسی شود برای فارسی
+  model: "unsloth/gemma-3-4b-it"  # مدل مناسب‌تر مجددا بررسی شود برای فارسی
   max_retries: 3
   retry_delay: 1.0
 
