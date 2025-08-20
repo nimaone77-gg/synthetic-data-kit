@@ -1,0 +1,85 @@
+# Master configuration file for Synthetic Data Kit
+# Global paths configuration
+paths:
+  # Input data locations
+  input:
+    pdf: "data/pdf"          # مسیر فایل‌های PDF فارسی
+    html: "data/html"
+    youtube: "data/youtube"
+    docx: "data/docx"
+    ppt: "data/ppt"
+    txt: "data/txt"
+  # Output locations
+  output:
+    parsed: "data/output"       # متون استخراج شده
+    generated: "data/generated" # محتوا و سوال‌و‌جواب تولید شده
+    cleaned: "data/cleaned"     # محتوای پاک‌سازی شده
+    final: "data/final"         # فرمت نهایی آماده برای آموزش
+
+# VLLM server configuration
+vllm:
+  api_base: "http://localhost:8000/v1"
+  port: 8000
+  model: "unsloth/Llama-3.2-3B-Instruct"  # مدل مناسب‌تر مجددا بررسی شود برای فارسی
+  max_retries: 3
+  retry_delay: 1.0
+
+# Ingest configuration
+ingest:
+  default_format: "pdf"        # تغییر به pdf برای فایل‌های فارسی   
+  youtube_captions: "auto"
+
+# LLM generation parameters
+generation:
+  temperature: 0.8             # کمی بالا‌تر برای خلاقیت بیشتر در فارسی
+  top_p: 0.9
+  chunk_size: 1500             # سایز چانک مناسب‌تر برای فارسی
+  overlap: 100                 # میزان همپوشانی مناسب برای حفظ سیاق متن
+  max_tokens: 1024             # توکن‌های بیشتر برای پاسخ‌های کامل‌تر
+  num_pairs: 25
+
+# Content cleanup parameters
+cleanup:
+  threshold: 1.0
+  batch_size: 4
+  temperature: 0.3
+
+# Format conversion parameters
+format:
+  default: "jsonl"
+  include_metadata: true
+  pretty_json: true
+
+# Prompts for different tasks
+prompts:
+  # Summary generation prompt
+  summary: |
+    این سند را در ۳ تا ۵ جمله خلاصه کن، با تمرکز بر موضوع اصلی و نکات کلیدی.
+  # QA pair generation prompt
+  qa_generation: |
+    از این متن {num_pairs} جفت سوال و جواب برای آموزش مدل زبان فارسی بساز.
+    قوانین:
+    1. سوال‌ها باید درباره اطلاعات مهم متن باشند.
+    2. پاسخ‌ها باید دقیقاً توسط متن پشتیبانی شوند.
+    3. فقط در قالب JSON بازگردان:
+    [
+      {{
+        "question": "سوال ۱؟",
+        "answer": "پاسخ ۱."
+      }},
+      {{
+        "question": "سوال ۲؟",
+        "answer": "پاسخ ۲."
+      }}
+    ]
+    متن:
+    {text}
+  # QA pair rating prompt
+  qa_rating: |
+    هر جفت سوال و جواب را از نظر کیفیت بررسی کن و دقیقا در قالب JSON زیر برگردان:
+    [
+      {{"question": "متن سوال", "answer": "متن جواب", "rating": n}}
+    ]
+    که n عددی در بازه ۱ تا ۱۰ است.
+    فقط JSON معتبر برگردان، بدون هیچ متن اضافی خارج از آرایه JSON:
+    {pairs}
