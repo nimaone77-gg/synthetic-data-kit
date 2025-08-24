@@ -1,0 +1,142 @@
+# Master configuration file for Synthetic Data Kit
+
+# Global paths configuration
+paths:
+  input:
+    pdf: "data_ollama/pdf"          # مسیر فایل‌های PDF فارسی
+    html: "data_ollama/html"
+    youtube: "data_ollama/youtube"
+    docx: "data_ollama/docx"
+    ppt: "data_ollama/ppt"
+    txt: "data_ollama/txt"
+  output:
+    parsed: "data_ollama/output"       # متون استخراج شده
+    generated: "data_ollama/generated" # محتوا و سوال‌و‌جواب تولید شده
+    curated: "data_ollama/curated"     # داده‌های بازبینی‌شده
+    final: "data_ollama/final"         # فرمت نهایی آماده برای آموزش
+
+# LLM Provider configuration
+llm:
+  provider: "api-endpoint"  # استفاده از مدل محلی Ollama (OpenAI compatible)
+
+# API endpoint (Ollama) server configuration
+api-endpoint:
+  api_base: "http://localhost:11434/v1"  # Ollama API base
+  api_key: "fake-api-key"  # Fake API key for Ollama compatibility
+  model: "gemma3:4b"  # مدل فارسی Ollama
+  max_retries: 3
+  retry_delay: 1.0
+  sleep_time: 0.1
+
+# Ingest configuration
+ingest:
+  default_format: "pdf"        # تغییر به pdf برای فایل‌های فارسی
+  youtube_captions: "auto"
+
+# LLM generation parameters
+generation:
+  temperature: 0.8             # کمی بالا‌تر برای خلاقیت بیشتر در فارسی
+  top_p: 0.9
+  chunk_size: 500             # سایز چانک مناسب‌تر برای فارسی
+  overlap: 100                 # میزان همپوشانی مناسب برای حفظ سیاق متن
+  max_tokens: 1024             # توکن‌های بیشتر برای پاسخ‌های کامل‌تر
+  num_pairs: 50
+  num_cot_examples: 5
+  num_cot_enhance_examples: null
+  batch_size: 4
+  max_context_length: 2048
+  summary_overlap: 0
+
+# Content curation parameters
+curate:
+  threshold: 7.0     # آستانه کیفیت (۱-۱۰)
+  batch_size: 4
+  inference_batch: 2
+  temperature: 0.1
+
+# Format conversion parameters
+format:
+  default: "jsonl"
+  include_metadata: true
+  pretty_json: true
+
+# Prompts for different tasks
+prompts:
+  # Summary generation prompt
+  summary: |
+    این سند را در ۳ تا ۵ جمله خلاصه کن، با تمرکز بر موضوع اصلی و نکات کلیدی.
+  # QA pair generation prompt
+  qa_generation: |
+    از این متن {num_pairs} جفت سوال و جواب برای آموزش مدل زبان فارسی بساز.
+    قوانین:
+    1. سوال‌ها باید درباره اطلاعات مهم متن باشند.
+    2. پاسخ‌ها باید دقیقاً توسط متن پشتیبانی شوند.
+    3. سوال‌ها نباید حاوی عبارت‌های کلی مانند "این دارو" یا "این شربت" شوند. (اسم دقیق دارو بجای "این دارو" نوشته شود)
+    4. سوال‌ها باید خاص و دقیق باشند و به داروهای یا مطالب خاصی در متن اشاره کنند.
+    5. سوال‌ها باید متنوع باشند و تکراری نباشند.
+    6. سوال‌ها باید به گونه‌ای باشند که نیاز به درک عمیق متن داشته باشند.
+    7. فقط در قالب JSON بازگردان:
+    [
+      {{
+        "question": "سوال ۱؟",
+        "answer": "پاسخ ۱."
+      }},
+      {{
+        "question": "سوال ۲؟",
+        "answer": "پاسخ ۲."
+      }}
+    ]
+    مهم: فقط JSON معتبر برگردان، بدون هیچ متن اضافی خارج از آرایه JSON.
+    متن:
+    {text}
+  # QA pair rating prompt
+  qa_rating: |
+    هر جفت سوال و جواب را از نظر کیفیت بررسی کن و دقیقاً در قالب JSON زیر برگردان:
+    [
+      {"question": "متن سوال", "answer": "متن جواب", "rating": n}
+    ]
+    که n عددی در بازه ۱ تا ۱۰ است.
+    فقط JSON معتبر برگردان، بدون هیچ متن اضافی خارج از آرایه JSON:
+    {pairs}
+  # Chain of Thought generation prompt
+  cot_generation: |
+    مثال‌های استدلال زنجیره‌ای پیچیده از این متن بساز که تفکر مرحله‌به‌مرحله را نشان دهد.
+    هر مثال باید شامل موارد زیر باشد:
+    1. یک سوال چالشی که نیاز به استدلال مرحله‌به‌مرحله دارد
+    2. مراحل استدلالی دقیق که مسئله را تجزیه می‌کند
+    3. یک پاسخ نهایی مختصر
+    فقط در قالب JSON بازگردان:
+    [
+      {
+        "question": "سوال پیچیده درباره متن؟",
+        "reasoning": "مرحله ۱: ابتدا باید ...\nمرحله ۲: سپس ...\nمرحله ۳: در نهایت ...",
+        "answer": "پاسخ نهایی بر اساس استدلال."
+      },
+      {
+        "question": "سوال پیچیده دیگر؟",
+        "reasoning": "مرحله ۱: ابتدا ...\nمرحله ۲: سپس ...\nمرحله ۳: بر اساس این تحلیل ...",
+        "answer": "پاسخ نهایی بر اساس استدلال."
+      }
+    ]
+    متن:
+    {text}
+  # Chain of Thought enhancement prompt
+  cot_enhancement: |
+    شما یک دستیار خبره استدلال هستید. وظیفه شما افزودن استدلال مرحله‌به‌مرحله به پاسخ‌های دستیار در مکالمات زیر است.
+    برای هر مکالمه، به پاسخ‌های دستیار مراحل استدلالی دقیق اضافه کن و پاسخ اصلی را حفظ کن.
+    {include_simple_steps} = آیا به پاسخ‌های ساده هم استدلال اضافه شود؟ اگر false فقط به پاسخ‌های پیچیده اضافه کن.
+    مکالمات بهبود یافته را فقط در قالب JSON بازگردان:
+    [
+      [
+        {"role": "system", "content": "پیام سیستم"},
+        {"role": "user", "content": "سوال کاربر"},
+        {"role": "assistant", "content": "بیایید مرحله‌به‌مرحله فکر کنیم:\n\n۱. ابتدا باید ...\n۲. سپس ...\n\nدر نتیجه، [پاسخ اصلی]"}
+      ],
+      [
+        {"role": "system", "content": "پیام سیستم"},
+        {"role": "user", "content": "سوال دیگر کاربر"},
+        {"role": "assistant", "content": "بیایید این را بررسی کنیم:\n\n۱. ابتدا ...\n۲. سپس ...\n\nدر نتیجه، [پاسخ اصلی]"}
+      ]
+    ]
+    مکالمات اصلی:
+    {conversations}
